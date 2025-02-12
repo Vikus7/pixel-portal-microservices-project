@@ -16,6 +16,12 @@ class User {
     const [rows] = await db.execute('SELECT * FROM usuario WHERE email = ?', [email]);
     return rows[0];
   }
+
+  static async updatePassword(email, password) {
+    const hashedPassword = await bcrypt.hash(password, 10);
+    const [result] = await db.execute('UPDATE usuario SET contrasena = ? WHERE email = ?', [hashedPassword, email]);
+    return result;
+  }
 }
 
 module.exports = User;
