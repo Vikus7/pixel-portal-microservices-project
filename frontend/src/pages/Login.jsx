@@ -25,42 +25,58 @@ const Login = () => {
       setLoading(true);
       setError('');
 
-      const response = await fetch('http://localhost:3001/api/auth/login', {
+      const response = await fetch('http://localhost:3000/api/auth/login', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          username: formData.username,
-          password: formData.password
+          email: formData.username,
+          contrasena: formData.password
         })
       });
 
+      
+
       const data = await response.json();
 
+      
+
       if (!response.ok) {
-        throw new Error(data.message || 'Error en el inicio de sesión');
+        throw new Error(data.message || 'Error en el inicio de sesiÃ³n');
       }
 
-      if (data.success) {
+
+     
+        
         // Guardar datos completos del usuario
         const userData = {
-            uid: data.user.uid,
-            nombreUsuario: data.user.displayName,
-            email: data.user.email,
-            fotoPerfil: data.user.photoURL || '/default-avatar.png',
-            dbId: data.user.dbId  // Agregar el ID de la base de datos
+            id: data.id,
+            nombreUsuario: data.nombre_usuario,
+            email: data.email,
+            fotoPerfil: data.foto_perfil || '/default-avatar.png',
+            token: data.token
         };
+
+  
+        
+        console.log('Token recibido:', data.token);
+
+        
         localStorage.setItem('user', JSON.stringify(userData));
         localStorage.setItem('isAuthenticated', 'true');
         navigate('/home');
-    }
+
+        
+
+  
     
     } catch (error) {
-      setError(error.message || 'Credenciales inválidas');
+      setError(error.message || 'Credenciales invÃ¡lidas');
     } finally {
       setLoading(false);
     }
+
 };
 
   return (
@@ -76,7 +92,7 @@ const Login = () => {
           <div>
             <input
               type="text"
-              placeholder="Usuario"
+              placeholder="Email"
               className="w-full bg-gray-700 text-white p-3 rounded-lg focus:ring-2 focus:ring-cyan-400 outline-none"
               value={formData.username}
               onChange={(e) => setFormData({...formData, username: e.target.value})}
