@@ -14,59 +14,57 @@ const ChatWindow = ({ isOpen, onClose }) => {
 
   useEffect(() => {
     if (isOpen && !socket) {
-      // Conectar al WebSocket cuando se abre el chat
       const newSocket = io('http://localhost:3001');
       setSocket(newSocket);
-
-      // Unirse al chat con los datos del usuario
+  
+      const user = JSON.parse(localStorage.getItem('user'));
       newSocket.emit('joinChat', {
-        username: user.displayName || user.nombreUsuario,
-        uid: user.uid
+        nombreUsuario: user.nombreUsuario
       });
-
-      // Escuchar nuevos mensajes
-      newSocket.on('newMessage', (messageData) => {
-        const formattedMessage = {
-          id: Date.now(),
-          text: messageData.message,
+  
+      // Escuchar mensajes históricos
+      newSocket.on('recentMessages', (historicMessages) => {
+        console.log('Mensajes históricos recibidos:', historicMessages);
+        const formattedMessages = historicMessages.map(msg => ({
+          id: Date.now() + Math.random(),
+          text: msg.message,
           sender: {
-            id: messageData.uid,
-            name: messageData.username,
-            avatar: messageData.avatar
+            id: msg.uid,
+            name: msg.username,
           },
-          timestamp: messageData.timestamp
-        };
-        setMessages(prev => [...prev, formattedMessage]);
+          timestamp: msg.timestamp
+        }));
+        setMessages(formattedMessages);
       });
 
-      // Escuchar cuando un usuario se une
-      newSocket.on('userJoined', (data) => {
-        const systemMessage = {
-          id: Date.now(),
-          text: data.message,
-          system: true,
-          timestamp: data.timestamp
-        };
-        setMessages(prev => [...prev, systemMessage]);
-      });
-
-      // Escuchar cuando un usuario se va
-      newSocket.on('userLeft', (data) => {
-        const systemMessage = {
-          id: Date.now(),
-          text: data.message,
-          system: true,
-          timestamp: data.timestamp
-        };
-        setMessages(prev => [...prev, systemMessage]);
-      });
-
-      return () => {
-        newSocket.close();
-        setSocket(null);
+    // Escuchar mensajes nuevos
+    newSocket.on('newMessage', (messageData) => {
+      console.log('Mensaje recibido:', messageData); // Debug log
+      
+      const formattedMessage = {
+        id: Date.now(),
+        text: messageData.message,
+        sender: {
+          id: messageData.uid,
+          name: messageData.username,
+        },
+        timestamp: messageData.timestamp
       };
-    }
-  }, [isOpen]);
+
+      setMessages(prev => [...prev, formattedMessage]);
+    });
+
+    // Escuchar errores
+    newSocket.on('error', (error) => {
+      console.error('Error del socket:', error);
+    });
+
+    return () => {
+      newSocket.close();
+      setSocket(null);
+    };
+  }
+}, [isOpen]);
 
   useEffect(() => {
     scrollToBottom();
@@ -79,9 +77,13 @@ const ChatWindow = ({ isOpen, onClose }) => {
   const handleSendMessage = (e) => {
     e.preventDefault();
     if (!newMessage.trim() || !socket) return;
-
-    // Emitir mensaje al servidor
-    socket.emit('globalMessage', newMessage);
+  
+    console.log('Enviando mensaje:', newMessage); // Debug log
+  
+    socket.emit('sendMessage', { 
+      message: newMessage 
+    });
+  
     setNewMessage('');
   };
 
