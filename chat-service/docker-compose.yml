@@ -1,0 +1,16 @@
+version: '3.8'
+
+services:
+  chat-service:
+    image: rafsebcastro/chat-service
+    ports:
+      - "3001:3001"
+    environment:
+      - DB_HOST=chat-service.database.windows.net
+      - DB_PORT=1433
+      - DB_USERNAME=Chat
+      - DB_PASSWORD=Service123
+      - DB_DATABASE=chat-service
+      - JWT_SECRET=AppWebsecret2025
+      - PORT=3001
+    restart: always
